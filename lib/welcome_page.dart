@@ -1,0 +1,58 @@
+﻿import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'package:tourmate/components/componets.dart';
+import 'package:tourmate/firebase_options.dart';
+
+class WelcomePage extends StatelessWidget {
+  const WelcomePage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color.fromRGBO(134, 93, 255, 1),
+      // ignore: avoid_unnecessary_containers
+      body: Column(
+        children: [
+          Container(
+            height: 370,
+            width: double.infinity,
+            alignment: Alignment.bottomLeft,
+            child: const Padding(
+              padding: EdgeInsets.only(left: 6),
+              child: Text(
+                'TourMate',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 60,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(top: 70),
+            child: SigninContainer(),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(top: 20),
+            child: LoginContainer(),
+          ),
+          Container(
+            height: 160,
+            width: 225,
+            alignment: Alignment.bottomCenter,
+            child: TextButton(
+              onPressed: () {},
+              child: const Text('利用することで利用規約・プライバシーポリシーに同意したものとします。'),
+              style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  textStyle: const TextStyle(
+                    fontSize: 10,
+                  )),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

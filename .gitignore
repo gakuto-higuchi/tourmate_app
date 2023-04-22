@@ -1,0 +1,69 @@
+
+# APIキーや秘密情報を含むファイル
+**/secrets.json
+**/api_keys.dart
+
+# Flutter/Dart関連
+**/ios/Flutter/.last_build_id
+*.dart_tool/
+.packages
+.pub/
+/build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.flutter_module_packages/
+
+# Android関連
+**/android/app/google-services.json
+**/android/app/debug.keystore
+**/android/app/src/debug/
+**/android/app/src/profile/
+**/android/app/src/main/AndroidManifest.xml
+**/android/.gradle/
+**/android/.idea/
+**/android/.vscode/
+**/android/.DS_Store
+**/android/app/build/
+**/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+
+# iOS関連
+**/ios/Runner/GeneratedPluginRegistrant.h
+**/ios/Runner/GeneratedPluginRegistrant.m
+**/ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/
+**/ios/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+**/ios/Runner.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+**/ios/Runner.xcodeproj/xcshareddata/
+**/ios/Runner.xcodeproj/xcuserdata/
+**/ios/.generated/
+**/ios/.idea/
+**/ios/.vscode/
+**/ios/.DS_Store
+**/ios/Pods/
+**/ios/Runner.xcworkspace/contents.xcworkspacedata
+**/ios/Runner.xcworkspace/xcshareddata/
+**/ios/Runner.xcworkspace/xcuserdata/
+**/ios/Runner.xcodeproj/project.xcworkspace/
+**/ios/Runner.xcodeproj/xcuserdata/
+**/ios/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+**/ios/Runner.xcworkspace/xcuserdata/
+**/ios/Runner/xcuserdata/
+**/ios/Flutter/AppFrameworkInfo.plist
+
+# Visual Studio Code関連
+.vscode/
+
+# macOS関連
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# 一般的な一時ファイルやログファイル
+*.lock
+*.log
+*.bak
+*.tmp
+*.swp
+*.swo
+*.swn
