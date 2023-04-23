@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import 'components/bottombar.dart';
+
 class GoogleMapPage extends StatefulWidget {
   const GoogleMapPage({Key? key}) : super(key: key);
 
@@ -39,6 +41,7 @@ class _GoogleMapPageState extends State<GoogleMapPage> {
           myLocationEnabled: true,
           myLocationButtonEnabled: true,
         ),
+        bottomNavigationBar: const BottomBar(),
       ),
     );
   }

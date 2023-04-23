@@ -1,7 +1,6 @@
 ﻿import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:tourmate/components/componets.dart';
-import 'package:tourmate/firebase_options.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({Key? key}) : super(key: key);
