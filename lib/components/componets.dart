@@ -35,7 +35,10 @@ class LoginContainer extends StatelessWidget {
         onPressed: () {
           Navigator.pushReplacementNamed(context, '/login');
         },
-        child: const Text('ログイン'),
+        child: const Text(
+          'ログイン',
+          style: TextStyle(fontSize: 18),
+        ),
         style: TextButton.styleFrom(
           foregroundColor: Colors.black,
           shape: RoundedRectangleBorder(
