@@ -22,7 +22,8 @@ class WelcomePage extends StatelessWidget {
                 'TourMate',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 60,
+                  fontStyle: FontStyle.italic,
+                  fontSize: 65,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -55,3 +56,5 @@ class WelcomePage extends StatelessWidget {
     );
   }
 }
+
+// TODO 背景を絵を追加した画像を作成し、背景にする。
