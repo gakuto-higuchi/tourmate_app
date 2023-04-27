@@ -6,8 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
+import 'package:flutter_google_places/flutter_google_places.dart';
 import 'components/bottombar.dart';
+import 'package:google_maps_webservice/places.dart';
+
+const kGoogleApiKey = "AIzaSyDwFLScwhjMtDIRrOzXKQVS4wgwDS9U7p4";
+GoogleMapsPlaces _places = GoogleMapsPlaces(apiKey: kGoogleApiKey);
 
 class GoogleMapPage extends StatefulWidget {
   const GoogleMapPage({Key? key}) : super(key: key);
@@ -19,6 +23,8 @@ class GoogleMapPage extends StatefulWidget {
 class _GoogleMapPageState extends State<GoogleMapPage> {
   final _controller = Completer<GoogleMapController>();
   Position? currentPosition;
+  final _places = GoogleMapsPlaces(apiKey: kGoogleApiKey);
+  final Set<Marker> _markers = {};
   //late GoogleMapController _controller;
   late StreamSubscription<Position> positionStream;
   //初期位置
@@ -76,9 +82,23 @@ class _GoogleMapPageState extends State<GoogleMapPage> {
             child: Align(
               alignment: Alignment.bottomCenter,
               child: FloatingActionButton(
+                heroTag: "current_location_button",
                 backgroundColor: Color.fromRGBO(134, 93, 255, 1),
                 onPressed: _goToCurrentLocation,
                 child: const Icon(Icons.my_location,
+                    size: 35, color: Color.fromRGBO(227, 132, 255, 1)),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: FloatingActionButton(
+                heroTag: "search_nearby_places_button",
+                backgroundColor: Color.fromRGBO(134, 93, 255, 1),
+                onPressed: _searchNearbyPlaces,
+                child: const Icon(Icons.search,
                     size: 35, color: Color.fromRGBO(227, 132, 255, 1)),
               ),
             ),
@@ -108,6 +128,65 @@ class _GoogleMapPageState extends State<GoogleMapPage> {
           zoom: 14,
         ),
       ));
+      _loadNearbyPlaces(currentPosition!.latitude, currentPosition!.longitude);
+    }
+  }
+
+  Future<void> _searchNearbyPlaces() async {
+    if (currentPosition != null) {
+      try {
+        Prediction? p = await PlacesAutocomplete.show(
+          context: context,
+          apiKey: kGoogleApiKey,
+          mode: Mode.overlay,
+          language: "ja",
+        );
+
+        if (p != null) {
+          // 追加: p が null でないことを確認
+          PlacesDetailsResponse detail =
+              await _places.getDetailsByPlaceId(p.placeId!);
+          final lat = detail.result.geometry!.location.lat;
+          final lng = detail.result.geometry!.location.lng;
+
+          final GoogleMapController controller = await _controller.future;
+          controller.animateCamera(CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(lat, lng),
+              zoom: 14,
+            ),
+          ));
+          _loadNearbyPlaces(lat, lng);
+        }
+      } catch (e) {
+        print(e);
+      }
+    }
+  }
+
+  Future<void> _loadNearbyPlaces(double lat, double lng) async {
+    _markers.clear();
+
+    final location = Location(lat: lat, lng: lng);
+    final result = await _places.searchNearbyWithRadius(location, 1500);
+
+    if (result.status == "OK") {
+      setState(() {
+        for (final place in result.results) {
+          final marker = Marker(
+            markerId: MarkerId(place.placeId),
+            position: LatLng(
+                place.geometry!.location.lat, place.geometry!.location.lng),
+            infoWindow: InfoWindow(
+              title: place.name,
+              snippet: place.vicinity,
+            ),
+          );
+          _markers.add(marker);
+        }
+      });
+    } else {
+      print('Error searching nearby places: ${result.errorMessage}');
     }
   }
 }
