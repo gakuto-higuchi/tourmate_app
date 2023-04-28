@@ -6,11 +6,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter_google_places/flutter_google_places.dart';
-import 'components/bottombar.dart';
 import 'package:google_maps_webservice/places.dart';
 
-const kGoogleApiKey = "AIzaSyDwFLScwhjMtDIRrOzXKQVS4wgwDS9U7p4";
+import 'components/bottombar.dart';
+import 'components/constants.dart';
+
+const kGoogleApiKey = apiKey;
 GoogleMapsPlaces _places = GoogleMapsPlaces(apiKey: kGoogleApiKey);
 
 class GoogleMapPage extends StatefulWidget {
@@ -22,19 +23,20 @@ class GoogleMapPage extends StatefulWidget {
 
 class _GoogleMapPageState extends State<GoogleMapPage> {
   final _controller = Completer<GoogleMapController>();
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+
   Position? currentPosition;
   final _places = GoogleMapsPlaces(apiKey: kGoogleApiKey);
   final Set<Marker> _markers = {};
-  //late GoogleMapController _controller;
   late StreamSubscription<Position> positionStream;
-  //初期位置
   final CameraPosition _kGooglePlex = const CameraPosition(
     target: LatLng(43.0686606, 141.3485613),
     zoom: 14,
   );
 
   final LocationSettings locationSettings = const LocationSettings(
-    accuracy: LocationAccuracy.high, //正確性:highはAndroid(0-100m),iOS(10m)
+    accuracy: LocationAccuracy.high,
     distanceFilter: 100,
   );
 
@@ -42,7 +44,6 @@ class _GoogleMapPageState extends State<GoogleMapPage> {
   void initState() {
     super.initState();
 
-    //位置情報が許可されていない時に許可をリクエストする
     Future(() async {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -50,7 +51,6 @@ class _GoogleMapPageState extends State<GoogleMapPage> {
       }
     });
 
-    //現在位置を更新し続ける
     positionStream =
         Geolocator.getPositionStream(locationSettings: locationSettings)
             .listen((Position? position) {
@@ -70,9 +70,8 @@ class _GoogleMapPageState extends State<GoogleMapPage> {
             mapType: MapType.normal,
             initialCameraPosition: _kGooglePlex,
             myLocationEnabled: true,
-            myLocationButtonEnabled: false, // Disable the default button
-            padding:
-                const EdgeInsets.only(bottom: 60.0), // Add padding to the map
+            myLocationButtonEnabled: false,
+            padding: const EdgeInsets.only(bottom: 60.0),
             onMapCreated: (GoogleMapController controller) {
               _onMapCreated(controller);
             },
@@ -91,15 +90,34 @@ class _GoogleMapPageState extends State<GoogleMapPage> {
             ),
           ),
           Padding(
-            padding: EdgeInsets.all(8.0),
+            padding: EdgeInsets.only(
+              top: 33,
+            ),
             child: Align(
               alignment: Alignment.topCenter,
-              child: FloatingActionButton(
-                heroTag: "search_nearby_places_button",
-                backgroundColor: Color.fromRGBO(134, 93, 255, 1),
-                onPressed: _searchNearbyPlaces,
-                child: const Icon(Icons.search,
-                    size: 35, color: Color.fromRGBO(227, 132, 255, 1)),
+              child: Container(
+                width: MediaQuery.of(context).size.width * 0.9,
+                decoration: BoxDecoration(
+                  color: Color.fromRGBO(134, 93, 255, 1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: TextField(
+                  style: TextStyle(color: Colors.white),
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  decoration: const InputDecoration(
+                    hintText: '検索したい地域を入力してね',
+                    border: InputBorder.none,
+                    prefixIcon: Icon(Icons.search,
+                        size: 30, color: Color.fromRGBO(227, 132, 255, 1)),
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+                  ),
+                  // ignore: unnecessary_lambdas
+                  onSubmitted: (value) {
+                    _searchNearbyPlaces(value);
+                  },
+                ),
               ),
             ),
           ),
@@ -112,10 +130,10 @@ class _GoogleMapPageState extends State<GoogleMapPage> {
   Future<void> _onMapCreated(GoogleMapController controller) async {
     if (!_controller.isCompleted) {
       _controller.complete(controller);
-      String value = await DefaultAssetBundle.of(context).loadString(
-          'lib/json/mapstyle_sample.json'); // Jsonファイルをcustom-mapを読み込む
+      String value = await DefaultAssetBundle.of(context)
+          .loadString('lib/json/mapstyle_sample.json');
       GoogleMapController futureController = await _controller.future;
-      futureController.setMapStyle(value); // Controllerを使ってMapをSetする
+      futureController.setMapStyle(value);
     }
   }
 
@@ -132,22 +150,18 @@ class _GoogleMapPageState extends State<GoogleMapPage> {
     }
   }
 
-  Future<void> _searchNearbyPlaces() async {
+  Future<void> _searchNearbyPlaces(String query) async {
     if (currentPosition != null) {
       try {
-        Prediction? p = await PlacesAutocomplete.show(
-          context: context,
-          apiKey: kGoogleApiKey,
-          mode: Mode.overlay,
-          language: "ja",
-        );
+        final location = Location(
+            lat: currentPosition!.latitude, lng: currentPosition!.longitude);
+        final result =
+            await _places.searchByText(query, location: location, radius: 5000);
 
-        if (p != null) {
-          // 追加: p が null でないことを確認
-          PlacesDetailsResponse detail =
-              await _places.getDetailsByPlaceId(p.placeId!);
-          final lat = detail.result.geometry!.location.lat;
-          final lng = detail.result.geometry!.location.lng;
+        if (result.status == "OK" && result.results.isNotEmpty) {
+          final place = result.results.first;
+          final lat = place.geometry!.location.lat;
+          final lng = place.geometry!.location.lng;
 
           final GoogleMapController controller = await _controller.future;
           controller.animateCamera(CameraUpdate.newCameraPosition(
@@ -157,9 +171,11 @@ class _GoogleMapPageState extends State<GoogleMapPage> {
             ),
           ));
           _loadNearbyPlaces(lat, lng);
+        } else {
+          print('No results found for the search query');
         }
       } catch (e) {
-        print(e);
+        print('Error searching nearby places: $e');
       }
     }
   }
