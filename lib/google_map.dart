@@ -30,10 +30,13 @@ class _GoogleMapPageState extends State<GoogleMapPage> {
   final _places = GoogleMapsPlaces(apiKey: kGoogleApiKey);
   final Set<Marker> _markers = {};
   late StreamSubscription<Position> positionStream;
+  /*
   final CameraPosition _kGooglePlex = const CameraPosition(
     target: LatLng(43.0686606, 141.3485613),
     zoom: 14,
   );
+  */
+  late CameraPosition _kGooglePlex;
 
   final LocationSettings locationSettings = const LocationSettings(
     accuracy: LocationAccuracy.high,
@@ -59,6 +62,7 @@ class _GoogleMapPageState extends State<GoogleMapPage> {
           ? 'Unknown'
           : '${position.latitude.toString()}, ${position.longitude.toString()}');
     });
+    _setInitialCameraPosition();
   }
 
   @override
@@ -205,5 +209,27 @@ class _GoogleMapPageState extends State<GoogleMapPage> {
       print('Error searching nearby places: ${result.errorMessage}');
     }
   }
+
+  Future<void> _setInitialCameraPosition() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        _kGooglePlex = CameraPosition(
+          target: LatLng(position.latitude, position.longitude),
+          zoom: 14,
+        );
+      });
+      // ignore: avoid_catches_without_on_clauses
+    } catch (e) {
+      // ignore: avoid_print
+      print('Error getting current location: $e');
+      setState(() {
+        _kGooglePlex = const CameraPosition(
+          target: LatLng(43.0686606, 141.3485613),
+          zoom: 14,
+        );
+      });
+    }
+  }
 }
-//gakuto.higuchi@gmail.com
