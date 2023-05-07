@@ -4,6 +4,7 @@ import 'package:tourmate/firebase_options.dart';
 import 'package:tourmate/auth_pages/log_in_page.dart';
 import 'package:tourmate/auth_pages/sign_up_page.dart';
 import 'package:tourmate/google_map.dart';
+import 'package:tourmate/new_post_page.dart';
 import 'package:tourmate/welcome_page.dart';
 import 'package:tourmate/home_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -46,6 +47,7 @@ class MyApp extends StatelessWidget {
         '/user_name': (context) => const UserNamePage(), //ユーザネーム
         '/profile_image': (context) => const ImagePage(), //プロフィール画像
         '/google_map': (context) => const GoogleMapPage(), //GoogleMap
+        '/new_post': (context) => const NewPostPage(), //新規投稿
       },
     );
   }

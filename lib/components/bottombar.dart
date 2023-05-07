@@ -21,7 +21,9 @@ class BottomBar extends StatelessWidget {
             color: Color.fromRGBO(227, 132, 255, 1),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pushNamed(context, '/new_post');
+            },
             icon: const Icon(Icons.add_box, size: 35),
             color: Color.fromRGBO(227, 132, 255, 1),
           ),
