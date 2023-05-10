@@ -56,6 +56,7 @@ class _NewPostMapState extends State<NewPostMap> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(title: const Text('Select Location')),
       body: _kGooglePlex != null
           ? Stack(
