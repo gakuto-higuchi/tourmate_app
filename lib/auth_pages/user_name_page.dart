@@ -20,6 +20,7 @@ class _UserNamePageState extends State<UserNamePage> {
   Widget build(BuildContext context) {
     final email = ModalRoute.of(context)!.settings.arguments as String;
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: const Color.fromRGBO(227, 132, 255, 1),
       body: Column(
         children: [
