@@ -18,7 +18,8 @@ class _NewPostPageState extends State<NewPostPage> {
   final TextEditingController _commentController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   List<XFile>? _images;
-  LatLng? _pickedLocation;
+  List<LatLng> _pickedLocations = [];
+  List<String> _pickedNames = []; // New property to store picked names
   List<String> _categories = ["カフェ", "デート", "気軽に遊ぶ", "おしゃれなお店", "その他"];
   List<String> _selectedCategories = [];
 
@@ -72,10 +73,10 @@ class _NewPostPageState extends State<NewPostPage> {
                   icon: const Icon(Icons.add_location),
                   label: const Text('Select Location'),
                 ),
-                // Display picked location
-                if (_pickedLocation != null)
+                // Display picked locations
+                if (_pickedLocations.isNotEmpty)
                   Text(
-                      'Location: ${_pickedLocation!.latitude}, ${_pickedLocation!.longitude}'),
+                      'Locations: ${_pickedLocations.map((location) => '(${location.latitude}, ${location.longitude})').join(', ')}'),
                 SizedBox(height: 16),
                 Text(
                   'Select Categories',
@@ -118,13 +119,15 @@ class _NewPostPageState extends State<NewPostPage> {
                     }
                     return null;
                   },
+                  maxLines: null,
                 ),
+                SizedBox(height: 16),
                 // Submit button
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                SizedBox(
+                  width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _submitPost,
-                    child: const Text('Submit'),
+                    onPressed: _submit,
+                    child: Text('Submit'),
                   ),
                 ),
               ],
@@ -136,62 +139,70 @@ class _NewPostPageState extends State<NewPostPage> {
   }
 
   Future<void> _addPhoto() async {
-    final pickedImages = await _picker.pickMultiImage();
-    if (pickedImages != null) {
+    final images = await _picker.pickMultiImage();
+    if (images != null) {
       setState(() {
-        _images = pickedImages;
+        _images = images;
       });
     }
   }
 
   Future<void> _selectLocation() async {
-// Navigate to GoogleMapPage and get the picked location
-// You need to implement the functionality to pick a location in GoogleMapPage and pass the picked location back
-    final pickedLocation = await Navigator.push<LatLng>(
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => NewPostMap(),
       ),
     );
-    if (pickedLocation != null) {
+
+    if (result != null && result is List<List>) {
       setState(() {
-        _pickedLocation = pickedLocation;
+        _pickedLocations = result[0].cast<LatLng>();
+        _pickedNames = result[1].cast<String>();
       });
     }
   }
 
-  Future<void> _submitPost() async {
-    if (_formKey.currentState!.validate()) {
-// Save the post to Firestore
+  Future<void> _submit() async {
+    if (_formKey.currentState!.validate() &&
+        _images != null &&
+        _pickedLocations.isNotEmpty &&
+        _pickedNames.isNotEmpty) {
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        final postRef = FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('posts')
-            .doc();
-        await postRef.set({
-          'images': _images!.map((image) => image.path).toList(),
-          'location': GeoPoint(
-            _pickedLocation!.latitude,
-            _pickedLocation!.longitude,
-          ),
-          'categories': _selectedCategories,
-          'comment': _commentController.text,
-          'timestamp': Timestamp.now(),
-        });
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Post submitted successfully')),
-        );
+      final docRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .collection('posts')
+          .doc();
 
-        // Navigate back to the previous page
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error: User not logged in')),
-        );
-      }
+      // Save post details to Firestore
+      await docRef.set({
+        'comment': _commentController.text,
+        'createdAt': Timestamp.now(),
+        'categories': _selectedCategories,
+        'locations': _pickedLocations
+            .asMap()
+            .entries
+            .map((entry) => {
+                  'latitude': entry.value.latitude,
+                  'longitude': entry.value.longitude,
+                  'name': _pickedNames[entry.key],
+                })
+            .toList(),
+      });
+
+      // Save photos to Firebase Storage
+      // ... (Firebase Storage への画像のアップロードコードをここに追加)
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Post submitted successfully')),
+      );
+
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please complete all required fields')),
+      );
     }
   }
 }
