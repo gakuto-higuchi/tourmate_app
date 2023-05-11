@@ -1,5 +1,4 @@
 ﻿import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -21,7 +20,8 @@ class _NewPostMapState extends State<NewPostMap> {
   final FocusNode _searchFocusNode = FocusNode();
 
   final Set<Marker> _markers = {};
-  LatLng? _pickedLocation;
+  List<LatLng> _pickedLocations = [];
+  List<String> _pickedNames = []; // New property to store picked names
 
   final LocationSettings locationSettings = const LocationSettings(
     accuracy: LocationAccuracy.high,
@@ -31,6 +31,7 @@ class _NewPostMapState extends State<NewPostMap> {
   late StreamSubscription<Position> positionStream;
   Position? currentPosition;
   CameraPosition? _kGooglePlex;
+
   @override
   void initState() {
     super.initState();
@@ -102,8 +103,8 @@ class _NewPostMapState extends State<NewPostMap> {
           : const Center(child: CircularProgressIndicator()),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          if (_pickedLocation != null) {
-            Navigator.pop(context, _pickedLocation);
+          if (_pickedLocations.isNotEmpty && _pickedNames.isNotEmpty) {
+            Navigator.pop(context, [_pickedLocations, _pickedNames]);
           }
         },
         child: const Icon(Icons.check),
@@ -112,80 +113,91 @@ class _NewPostMapState extends State<NewPostMap> {
   }
 
   void _onMapTap(LatLng position) {
-    setState(() {
-      _pickedLocation = position;
-      _markers.clear(); // Remove the previous marker
-      _markers.add(Marker(
-        markerId: MarkerId(position.toString()),
-        position: position,
-      ));
+    showDialog<String>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Name the location'),
+        content: TextField(
+          autofocus: true,
+          onSubmitted: (value) {
+            Navigator.of(context).pop(value);
+          },
+        ),
+      ),
+    ).then((value) {
+      if (value != null) {
+        setState(() {
+          _pickedLocations.add(position);
+          _pickedNames.add(value);
+          _markers.add(
+            Marker(
+              markerId: MarkerId(value),
+              position: position,
+              icon: BitmapDescriptor.defaultMarker,
+            ),
+          );
+        });
+      }
     });
   }
 
   Future<void> _onMapCreated(GoogleMapController controller) async {
+    _controller.complete(controller);
     _mapController = controller;
-    if (!_controller.isCompleted) {
-      _controller.complete(controller);
-      String value = await DefaultAssetBundle.of(context)
-          .loadString('lib/json/mapstyle_sample.json');
-      GoogleMapController futureController = await _controller.future;
-      futureController.setMapStyle(value);
+    if (currentPosition != null) {
+      await _mapController.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target:
+                LatLng(currentPosition!.latitude, currentPosition!.longitude),
+            zoom: 15.0,
+          ),
+        ),
+      );
     }
   }
 
   Future<void> _searchLocation(String query) async {
-    try {
-      final currentPosition = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
-      final location = Location(
-          lat: currentPosition.latitude, lng: currentPosition.longitude);
-      final result = await _places.searchByText(query,
-          location: location, radius: 5000, language: 'ja');
-
-      // 検索結果を表示
-      print('Search result status: ${result.status}');
-      for (var place in result.results) {
-        print(
-            'Place: ${place.name}, lat: ${place.geometry!.location.lat}, lng: ${place.geometry!.location.lng}');
-      }
-
-      if (result.status == 'OK' && result.results.isNotEmpty) {
-        final place = result.results.first;
-        final lat = place.geometry!.location.lat;
-        final lng = place.geometry!.location.lng;
-        _mapController.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(target: LatLng(lat, lng), zoom: 14),
+    _searchFocusNode.unfocus();
+    PlacesSearchResponse response = await _places.searchByText(query);
+    if (response.status == 'OK' && response.results.isNotEmpty) {
+      PlacesSearchResult result = response.results.first;
+      await _mapController.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(
+              result.geometry!.location.lat,
+              result.geometry!.location.lng,
+            ),
+            zoom: 15.0,
           ),
-        );
-      } else {
-        print('No results found for the search query');
-      }
-    } catch (e) {
-      print('Error searching location: $e');
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No results found for the search query'),
+        ),
+      );
     }
   }
 
   Future<void> _setInitialCameraPosition() async {
-    try {
-      Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
+    currentPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+    if (currentPosition != null) {
       setState(() {
         _kGooglePlex = CameraPosition(
-          target: LatLng(position.latitude, position.longitude),
-          zoom: 14,
-        );
-      });
-      // ignore: avoid_catches_without_on_clauses
-    } catch (e) {
-      // ignore: avoid_print
-      print('Error getting current location: $e');
-      setState(() {
-        _kGooglePlex = const CameraPosition(
-          target: LatLng(43.0686606, 141.3485613),
-          zoom: 14,
+          target: LatLng(currentPosition!.latitude, currentPosition!.longitude),
+          zoom: 15.0,
         );
       });
     }
+  }
+
+  @override
+  void dispose() {
+    positionStream.cancel();
+    super.dispose();
   }
 }
