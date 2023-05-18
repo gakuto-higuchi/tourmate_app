@@ -27,7 +27,7 @@ class _NewPostPageState extends State<NewPostPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('New Post'),
+        title: Text('appbarいらんくね？'),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -38,14 +38,14 @@ class _NewPostPageState extends State<NewPostPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Add Photo*',
+                  '投稿する写真を入れてね',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 // Add photo button
                 TextButton.icon(
                   onPressed: _addPhoto,
                   icon: const Icon(Icons.add_a_photo),
-                  label: const Text('Select Photo'),
+                  label: const Text('写真を選択してください'),
                 ),
                 // Display selected photos
                 _images != null
@@ -64,14 +64,14 @@ class _NewPostPageState extends State<NewPostPage> {
                     : Container(),
                 SizedBox(height: 16),
                 Text(
-                  'Add Location*',
+                  '投稿したい位置を入れてね(タップしたらできるよ)',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 // Add location button
                 TextButton.icon(
                   onPressed: _selectLocation,
                   icon: const Icon(Icons.add_location),
-                  label: const Text('Select Location'),
+                  label: const Text('位置を選択してください'),
                 ),
                 // Display picked locations
                 if (_pickedLocations.isNotEmpty)
@@ -79,7 +79,7 @@ class _NewPostPageState extends State<NewPostPage> {
                       'Locations: ${_pickedLocations.map((location) => '(${location.latitude}, ${location.longitude})').join(', ')}'),
                 SizedBox(height: 16),
                 Text(
-                  'Select Categories',
+                  'カテゴリ',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 // Select categories
@@ -104,18 +104,18 @@ class _NewPostPageState extends State<NewPostPage> {
                 ),
                 SizedBox(height: 16),
                 Text(
-                  'Comment*',
+                  'コメント内容',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 // Comment input
                 TextFormField(
                   controller: _commentController,
                   decoration: const InputDecoration(
-                    hintText: 'Add your comment here',
+                    hintText: 'コメントをここに入力してください',
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a comment';
+                      return 'コメント入れてくれやで';
                     }
                     return null;
                   },
@@ -127,7 +127,7 @@ class _NewPostPageState extends State<NewPostPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _submit,
-                    child: Text('Submit'),
+                    child: Text('投稿'),
                   ),
                 ),
               ],
@@ -144,6 +144,10 @@ class _NewPostPageState extends State<NewPostPage> {
       setState(() {
         _images = images;
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('${images.length}枚の写真が追加されました')), // Provide feedback
+      );
     }
   }
 
@@ -195,13 +199,13 @@ class _NewPostPageState extends State<NewPostPage> {
       // ... (Firebase Storage への画像のアップロードコードをここに追加)
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Post submitted successfully')),
+        SnackBar(content: Text('投稿できたよ')),
       );
 
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please complete all required fields')),
+        SnackBar(content: Text('全部入力してくれやで')),
       );
     }
   }
